@@ -64,7 +64,7 @@ class Queues(Simulation):
         # schedule the time of the completion event
         # check `schedule_arrival` for inspiration
         
-        self.schedule(..., ...)
+        self.schedule(expovariate(self.mu), Completion(job_id, queue_index))
 
     def queue_len(self, i):
         """Return the length of the i-th queue.
@@ -94,7 +94,13 @@ class Arrival(Event):
             # schedule its completion
         # otherwise, put the job into the queue
         # schedule the arrival of the next job
-
+        if sim.running[queue_index] is None:
+            sim.running[queue_index] = self.id
+            sim.schedule_completion(self.id,queue_index)
+        else:
+            sim.queues[queue_index].append(self.id)
+       
+        sim.schedule_arrival(self.id + 1)
         # if you are looking for inspiration, check the `Completion` class below
 
 
