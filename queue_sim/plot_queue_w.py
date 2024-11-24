@@ -83,7 +83,8 @@ def main():
 
     data = read_csv(args.filename, args.mu, args.max_t, args.n, args.d)
     plot(data, args.log_scale)
-    plt.show()
+    # plt.show() 
+    plt.savefig("output.png")
 
 if __name__ == '__main__':
     main()
