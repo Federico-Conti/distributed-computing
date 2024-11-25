@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-
+from matplotlib import pyplot as plt
+import numpy as np
 import argparse
 import csv
 import collections
@@ -33,7 +34,7 @@ class Queues(Simulation):
     the shortest one.
     """
 
-    def __init__(self, lambd, mu, n, d):
+    def __init__(self, lambd, mu, n, d,monitoring_interval):
         super().__init__()
         self.running = [None] * n  # if not None, the id of the running job (per queue)
         self.queues = [collections.deque() for _ in range(n)]  # FIFO queues of the system
@@ -44,9 +45,15 @@ class Queues(Simulation):
         self.n = n
         self.d = d
         self.mu = mu
-        self.arrival_rate = lambd * n  # frequency of new jobs is proportional to the number of queues
+        self.arrival_rate = lambd * n  # frequency of new jobs is proportional to the number of queuesù
+        
+        self.monitoring_interval = monitoring_interval
+        self.monitored_data = []  # to store the queue length stats
+        self.schedule(0, Monitoring())  # schedule the first monitoring event
+        
         self.schedule(expovariate(lambd), Arrival(0))  # schedule the first arrival
-
+        
+        
     def schedule_arrival(self, job_id):
         """Schedule the arrival of a new job."""
 
@@ -121,15 +128,38 @@ class Completion(Event):
             sim.schedule_completion(new_job_id, queue_index)  # schedule its completion
         else:
             sim.running[queue_index] = None  # no job is running on the queue
+            
+            
+class Monitoring(Event):
+    """Event for periodic monitoring of queue lengths."""
+    def process(self, sim: Queues):
+        # Record the current queue lengths
+        queue_lengths = [sim.queue_len(i) for i in range(sim.n)]
+        sim.monitored_data.append(queue_lengths) #snapshot
 
+        # Schedule the next monitoring event
+        sim.schedule(sim.t + sim.monitoring_interval, Monitoring())
+        
+        
+def compute_queue_length_distribution(monitored_data, n):
+    max_length = max(max(data) for data in monitored_data)
+    fractions = []
+    for x in range(max_length + 1):
+        fraction = [
+            sum(1 for length in data if length >= x) / n
+            for data in monitored_data
+        ]
+        fractions.append(np.mean(fraction))
+    return fractions
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--lambd', type=float, default=0.7, help="arrival rate")
+    parser.add_argument('--lambd', type=float, default=0.5, help="arrival rate")
     parser.add_argument('--mu', type=float, default=1, help="service rate")
     parser.add_argument('--max-t', type=float, default=1_000_000, help="maximum time to run the simulation")
-    parser.add_argument('--n', type=int, default=1, help="number of servers")
-    parser.add_argument('--d', type=int, default=1, help="number of queues to sample")
+    parser.add_argument('--n', type=int, default=10, help="number of servers")
+    parser.add_argument('--d', type=int, default=2, help="number of queues to sample")
+    parser.add_argument('--monitor', type=float, default=1000, help="monitor interval")
     parser.add_argument('--csv', help="CSV file in which to store results")
     parser.add_argument("--seed", help="random seed")
     parser.add_argument("--verbose", action='store_true')
@@ -151,7 +181,7 @@ def main():
     if args.lambd >= args.mu:
         logging.warning("The system is unstable: lambda >= mu")
 
-    sim = Queues(args.lambd, args.mu, args.n, args.d)
+    sim = Queues(args.lambd, args.mu, args.n, args.d, args.monitor)
     sim.run(args.max_t)
 
     completions = sim.completions
@@ -165,7 +195,25 @@ def main():
         with open(args.csv, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(params + [W])
-
+            
+    # After the simulation ends
+    queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
+    
+    # Save the results in a CSV file
+    output_csv = "queue_length_distribution.csv"
+    with open(output_csv, mode="a", newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        
+        # Write the header
+        csvwriter.writerow([args.lambd, args.d])
+        
+        # Write the data
+        for x, fraction in enumerate(queue_length_distribution):
+            csvwriter.writerow([x, fraction])
+            
+        csvwriter.writerow([])  # This adds a blank row       
+            
+  
 
 if __name__ == '__main__':
     main()
