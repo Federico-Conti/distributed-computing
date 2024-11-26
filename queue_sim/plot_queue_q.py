@@ -1,7 +1,6 @@
-#TODO
-
-import pandas as pd
+#import pandas as pd
 import matplotlib.pyplot as plt
+import argparse
 
 def plot_queue_lengths(csv_file):
     # Legge i dati dal CSV
@@ -10,39 +9,36 @@ def plot_queue_lengths(csv_file):
 
     # Parsing del CSV
     data = {}
-    current_lambda = None
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
 
-        parts = line.split(',')
-        if len(parts) == 2:  # Indicatore di una nuova sezione lambda
-            current_lambda = float(parts[0])
-        
-            data[current_lambda] = []
-        else:  # Riga di dati
+    while lines:
+        current_lambda = float(lines.pop(0).strip())
+        data[current_lambda] = []
+
+        while lines and lines[0].strip() != '':
+            parts = lines.pop(0).split(',')
             queue_length = int(parts[0])
             fraction = float(parts[1])
             data[current_lambda].append((queue_length, fraction))
+        
+        if lines:
+            lines.pop(0)
 
-    # Crea il grafico
-    plt.figure(figsize=(10, 6))
-    for lambda_val, values in data.items():
-        x = [v[0] for v in values]
-        y = [v[1] for v in values]
-        plt.plot(x, y, label=f'$\u03BB$ = {lambda_val}')
+    for lambda_value, values in data.items():
+        queue_lengths, fractions = zip(*sorted(values))
+        plt.plot(queue_lengths, fractions, label=f'λ={lambda_value}')
+    
 
-    # Personalizza il grafico
-    plt.title('2 Choices')
-    plt.xlabel('Queue length')
-    plt.ylabel('Fraction of queues with at least that size')
+    plt.xlabel('Queue Length')
+    plt.ylabel('Fraction')
+    #plt.title(f'Queue Length Distribution (d={d})')
     plt.legend()
-    plt.grid(True)
-    plt.savefig("queue_length_distribution.png")
+    plt.show()
+
+    
+
 
 def main():
-   plot_queue_lengths("queue_length_distribution.csv")
+   plot_queue_lengths("/home/lolablank/Desktop/dc/distributed-computing/queue_sim/queue_length_distribution.csv")
 
 if __name__ == '__main__':
     main()

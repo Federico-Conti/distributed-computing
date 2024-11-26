@@ -159,7 +159,7 @@ def main():
     parser.add_argument('--max-t', type=float, default=1_000_000, help="maximum time to run the simulation")
     parser.add_argument('--n', type=int, default=10, help="number of servers")
     parser.add_argument('--d', type=int, default=2, help="number of queues to sample")
-    parser.add_argument('--monitor', type=float, default=1000, help="monitor interval")
+    parser.add_argument('--monitor', type=float, default=200, help="monitor interval")
     parser.add_argument('--csv', help="CSV file in which to store results")
     parser.add_argument("--seed", help="random seed")
     parser.add_argument("--verbose", action='store_true')
@@ -205,7 +205,7 @@ def main():
         csvwriter = csv.writer(csvfile)
         
         # Write the header
-        csvwriter.writerow([args.lambd, args.d])
+        csvwriter.writerow([args.lambd])
         
         # Write the data
         for x, fraction in enumerate(queue_length_distribution):
