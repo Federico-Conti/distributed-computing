@@ -1,8 +1,9 @@
-#import pandas as pd
+#!/usr/bin/env python3
+
 import matplotlib.pyplot as plt
 import argparse
 
-def plot_queue_lengths(csv_file):
+def plot_queue_lengths(csv_file,d):
     # Legge i dati dal CSV
     with open(csv_file, 'r') as file:
         lines = file.readlines()
@@ -29,16 +30,23 @@ def plot_queue_lengths(csv_file):
     
 
     plt.xlabel('Queue Length')
-    plt.ylabel('Fraction')
-    #plt.title(f'Queue Length Distribution (d={d})')
+    plt.ylabel('Fraction of queues with at least that size')
+    plt.title(f'{d} choice/s')
     plt.legend()
-    plt.show()
+    plt.grid(True)
+    plt.savefig(f"{d}_choice.png")
 
     
 
 
 def main():
-   plot_queue_lengths("/home/lolablank/Desktop/dc/distributed-computing/queue_sim/queue_length_distribution.csv")
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--d', type=int, help="number of queues to sample")
+    parser.add_argument('--csv', help="CSV file in which to store results")
+
+    args = parser.parse_args()
+    plot_queue_lengths(args.csv ,args.d)
+    
 
 if __name__ == '__main__':
     main()

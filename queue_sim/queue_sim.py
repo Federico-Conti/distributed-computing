@@ -45,7 +45,7 @@ class Queues(Simulation):
         self.n = n
         self.d = d
         self.mu = mu
-        self.arrival_rate = lambd * n  # frequency of new jobs is proportional to the number of queuesù
+        self.arrival_rate = lambd * n  # frequency of new jobs is proportional to the number of queues
         
         self.monitoring_interval = monitoring_interval
         self.monitored_data = []  # to store the queue length stats
@@ -142,12 +142,11 @@ class Monitoring(Event):
         
         
 def compute_queue_length_distribution(monitored_data, n):
-    #max_length = max(max(data) for data in monitored_data)
     max_length = 14
     fractions = []
     for x in range(max_length + 1):
         fraction = [
-            sum(1 for length in data if length >= x) / n
+            sum(1 for length in data if length >= x) / n 
             for data in monitored_data
         ]
         fractions.append(np.mean(fraction))
@@ -160,7 +159,6 @@ def main():
     parser.add_argument('--max-t', type=float, default=1_000_000, help="maximum time to run the simulation")
     parser.add_argument('--n', type=int, default=10, help="number of servers")
     parser.add_argument('--d', type=int, default=2, help="number of queues to sample")
-    parser.add_argument('--monitor', type=float, default=200, help="monitor interval")
     parser.add_argument('--csv', help="CSV file in which to store results")
     parser.add_argument("--seed", help="random seed")
     parser.add_argument("--verbose", action='store_true')
@@ -182,7 +180,8 @@ def main():
     if args.lambd >= args.mu:
         logging.warning("The system is unstable: lambda >= mu")
 
-    sim = Queues(args.lambd, args.mu, args.n, args.d, args.monitor)
+    monitor_delay = (args.max_t*0.001)/(args.n*args.lambd)
+    sim = Queues(args.lambd, args.mu, args.n, args.d, monitor_delay)
     sim.run(args.max_t)
 
     completions = sim.completions
@@ -201,7 +200,7 @@ def main():
     queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
     
     # Save the results in a CSV file
-    output_csv = "queue_length_distribution.csv"
+    output_csv = f"{args.d}_choice.csv"
     with open(output_csv, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         
