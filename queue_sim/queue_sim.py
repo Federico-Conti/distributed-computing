@@ -6,8 +6,11 @@ import csv
 import collections
 import logging
 from random import expovariate, sample, seed
+import math
 
 from discrete_event_sim import Simulation, Event
+
+from workloads import weibull_generator
 
 # One possible modification is to use a different distribution for job sizes or and/or interarrival times.
 # Weibull distributions (https://en.wikipedia.org/wiki/Weibull_distribution) are a generalization of the
@@ -34,7 +37,7 @@ class Queues(Simulation):
     the shortest one.
     """
 
-    def __init__(self, lambd, mu, n, d,monitoring_interval):
+    def __init__(self, lambd, mu, n, d,monitoring_interval,weibull,shape):
         super().__init__()
         self.running = [None] * n  # if not None, the id of the running job (per queue)
         self.queues = [collections.deque() for _ in range(n)]  # FIFO queues of the system
@@ -46,14 +49,27 @@ class Queues(Simulation):
         self.d = d
         self.mu = mu
         self.arrival_rate = lambd * n  # frequency of new jobs is proportional to the number of queues
-        
+
         self.monitoring_interval = monitoring_interval
         self.monitored_data = []  # to store the queue length stats
         self.schedule(0, Monitoring())  # schedule the first monitoring event
-        
-        self.schedule(expovariate(lambd), Arrival(0))  # schedule the first arrival
-        
-        
+
+        self.shape = shape 
+        self.useWeibull = weibull
+        # self.b_arrival = math.pow(self.lambd,SHAPE*-1)
+        # self.b_service = math.pow(self.mu,SHAPE*-1)
+        # self.arrival_mean = math.pow(self.b_arrival,-1/SHAPE) * np.gamma(1 + 1 / SHAPE)
+        # self.service_mean = math.pow(self.b_service,-1/SHAPE) * np.gamma(1 + 1 / SHAPE)
+
+        # self.arrival_mean = self.lambd * math.gamma(1 + 1 / SHAPE)
+        # self.service_mean = self.mu * math.gamma(1 + 1 / SHAPE)
+        # self.arrival_gen = weibull_generator(SHAPE, self.arrival_mean)
+        # self.service_gen = weibull_generator(SHAPE, self.service_mean)
+
+        self.arrival_gen = weibull_generator(shape, 1/self.arrival_rate)
+        self.service_gen = weibull_generator(shape, 1/self.mu)
+        self.schedule(self.arrival_gen() if weibull else expovariate(lambd), Arrival(0))
+
     def schedule_arrival(self, job_id):
         """Schedule the arrival of a new job."""
 
@@ -63,19 +79,20 @@ class Queues(Simulation):
         # memoryless behavior results in exponentially distributed times between arrivals (we use `expovariate`)
         # the rate of arrivals is proportional to the number of queues
 
-        self.schedule(expovariate(self.arrival_rate), Arrival(job_id))
+        self.schedule(self.arrival_gen() if self.useWeibull else expovariate(self.arrival_rate), Arrival(job_id))
 
     def schedule_completion(self, job_id, queue_index):  # TODO: complete this method
         """Schedule the completion of a job."""
-        
+
         # schedule the time of the completion event
         # check `schedule_arrival` for inspiration
-        
-        self.schedule(expovariate(self.mu), Completion(job_id, queue_index))
+
+        self.schedule(self.service_gen() if self.useWeibull else expovariate(self.mu),Completion(job_id, queue_index))
+
 
     def queue_len(self, i):
         """Return the length of the i-th queue.
-        
+
         Notice that the currently running job is counted even if it is not in self.queues[i]."""
 
         return (self.running[i] is not None) + len(self.queues[i])
@@ -106,7 +123,7 @@ class Arrival(Event):
             sim.schedule_completion(self.id,queue_index)
         else:
             sim.queues[queue_index].append(self.id)
-       
+
         sim.schedule_arrival(self.id + 1)
         # if you are looking for inspiration, check the `Completion` class below
 
@@ -128,8 +145,8 @@ class Completion(Event):
             sim.schedule_completion(new_job_id, queue_index)  # schedule its completion
         else:
             sim.running[queue_index] = None  # no job is running on the queue
-            
-            
+
+
 class Monitoring(Event):
     """Event for periodic monitoring of queue lengths."""
     def process(self, sim: Queues):
@@ -138,15 +155,15 @@ class Monitoring(Event):
         sim.monitored_data.append(queue_lengths) #snapshot
 
         # Schedule the next monitoring event
-        sim.schedule(sim.t + sim.monitoring_interval, Monitoring())
-        
-        
+        sim.schedule(sim.monitoring_interval, Monitoring())
+
+
 def compute_queue_length_distribution(monitored_data, n):
     max_length = 14
     fractions = []
     for x in range(max_length + 1):
         fraction = [
-            sum(1 for length in data if length >= x) / n 
+            sum(1 for length in data if length >= x) / n
             for data in monitored_data
         ]
         fractions.append(np.mean(fraction))
@@ -158,12 +175,16 @@ def main():
     parser.add_argument('--mu', type=float, default=1, help="service rate")
     parser.add_argument('--max-t', type=float, default=1_000_000, help="maximum time to run the simulation")
     parser.add_argument('--n', type=int, default=10, help="number of servers")
-    parser.add_argument('--d', type=int, default=2, help="number of queues to sample")
+    parser.add_argument('--d', type=int, default=5, help="number of queues to sample")
+    parser.add_argument('--shape', type=float, default=1, help="weibull shape")
     parser.add_argument('--csv', help="CSV file in which to store results")
+    parser.add_argument('--weibull', action=argparse.BooleanOptionalAction, default=True, help="use weibull distribution")
     parser.add_argument("--seed", help="random seed")
     parser.add_argument("--verbose", action='store_true')
-    args = parser.parse_args()
 
+    args = parser.parse_args()
+    
+  
     params = [getattr(args, column) for column in CSV_COLUMNS[:-1]]
     # corresponds to params = [args.lambd, args.mu, args.max_t, args.n, args.d]
 
@@ -181,7 +202,7 @@ def main():
         logging.warning("The system is unstable: lambda >= mu")
 
     monitor_delay = (args.max_t*0.001)/(args.n*args.lambd)
-    sim = Queues(args.lambd, args.mu, args.n, args.d, monitor_delay)
+    sim = Queues(args.lambd, args.mu, args.n, args.d, monitor_delay, args.weibull,args.shape)
     sim.run(args.max_t)
 
     completions = sim.completions
@@ -195,25 +216,25 @@ def main():
         with open(args.csv, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(params + [W])
-            
+
     # After the simulation ends
     queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
-    
+
     # Save the results in a CSV file
-    output_csv = f"{args.d}_choice.csv"
+    output_csv = f"./data/{args.d}_choice-weibull-shape{args.shape}.csv" if args.weibull else f"./data/{args.d}_choice.csv"
     with open(output_csv, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
-        
+
         # Write the header
         csvwriter.writerow([args.lambd])
-        
+
         # Write the data
         for x, fraction in enumerate(queue_length_distribution):
             csvwriter.writerow([x, fraction])
-            
-        csvwriter.writerow([])  # This adds a blank row       
-            
-  
+
+        csvwriter.writerow([])  # This adds a blank row
+
+
 
 if __name__ == '__main__':
     main()
