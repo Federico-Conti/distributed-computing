@@ -56,17 +56,17 @@ class Queues(Simulation):
         initial_remaining_time = self.service_gen() if weibull else expovariate(mu)
         # initial_job = Job(0, initial_remaining_time)
         # self.jobs[0] = initial_job
-        self.schedule(initial_remaining_time, Arrival(0,initial_remaining_time))
+        self.schedule(initial_remaining_time, Arrival(0,self))
 
     def schedule_arrival(self, job_id):
         """Schedule the arrival of a new job."""
         remaining_time = self.arrival_gen() if self.useWeibull else expovariate(self.arrival_rate)
-        self.schedule(remaining_time, Arrival(job_id,remaining_time))
+        self.schedule(remaining_time, Arrival(job_id,self))
 
     def schedule_completion(self, job, queue_index):  
         """Schedule the completion of a job."""
-        remaining_time = self.service_gen() if self.useWeibull else expovariate(self.mu)
-        self.schedule(remaining_time,Completion(job, queue_index))
+
+        self.schedule(job.remaining_time,Completion(job, queue_index))
 
 
     def queue_len(self, i):
@@ -80,8 +80,9 @@ class Queues(Simulation):
 class Arrival(Event):
     """Event representing the arrival of a new job."""
 
-    def __init__(self, job_id, reamining_time):
-        self.job = Job(job_id,reamining_time)
+    def __init__(self, job_id,sim: Queues):
+        remaining_time = sim.service_gen() if sim.useWeibull else expovariate(sim.mu)
+        self.job = Job(job_id,remaining_time)
 
     def process(self, sim: Queues):  
         sim.arrivals[self.job.job_id] = sim.t  # set the arrival time of the job
@@ -92,23 +93,9 @@ class Arrival(Event):
             sim.running[queue_index] = self.job
             sim.schedule_completion(self.job,queue_index)
         else:
-            # Preemption check: compare the remaining times
-            current_job = sim.running[queue_index]
+            heapq.heappush(sim.queues[queue_index], (self.job.remaining_time, self.job))
             
-            if self.job.remaining_time < current_job.remaining_time:
-                # Preempt the current job
-                current_job.remaining_time = (sim.t - sim.arrivals[current_job.job_id])
-                
-                heapq.heappush(sim.queues[queue_index], (current_job.remaining_time, current_job))
-            
-                 # Start the new job
-                sim.running[queue_index] = self.job
-                sim.schedule_completion(self.job, queue_index)
-            else:
-                # Add new job to the queue
-                heapq.heappush(sim.queues[queue_index], (self.job.remaining_time, self.job))
-              
-                
+          
         sim.schedule_arrival(self.job.job_id + 1)
 
 class Completion(Event):
@@ -122,13 +109,12 @@ class Completion(Event):
         queue_index = self.queue_index
         assert sim.running[queue_index].job_id == self.job.job_id  # the job must be the one running
         sim.completions[self.job.job_id] = sim.t
-
-        self.job.remaining_time = 0  # Mark the job as completed
         
         queue = sim.queues[queue_index]
+
         if queue:
             # Assign the job with the shortest remaining time to start running
-            shorttes_remainig_time, shortest_job = heapq.heappop(queue)
+            _,shortest_job = heapq.heappop(queue)
             sim.running[queue_index] = shortest_job      
             sim.schedule_completion(shortest_job, queue_index)
         else:
@@ -146,7 +132,7 @@ class Monitoring(Event):
 
 
 def compute_queue_length_distribution(monitored_data, n):
-    max_length = 14
+    max_length = 30
     fractions = []
     for x in range(max_length + 1):
         fraction = [
