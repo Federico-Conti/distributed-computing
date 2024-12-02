@@ -5,28 +5,21 @@ import argparse
 import csv
 import collections
 import logging
+import heapq
 from random import expovariate, sample, seed
 
-from discrete_event_sim import Simulation, Event
+from discrete_event_sim_srpt import Simulation, Event
 
 from workloads import weibull_generator
 
-# One possible modification is to use a different distribution for job sizes or and/or interarrival times.
-# Weibull distributions (https://en.wikipedia.org/wiki/Weibull_distribution) are a generalization of the
-# exponential distribution, and can be used to see what happens when values are more uniform (shape > 1,
-# approaching a "bell curve") or less (shape < 1, "heavy tailed" case when most of the work is concentrated
-# on few jobs).
-
-# To use Weibull variates, for a given set of parameter do something like
-# from workloads import weibull_generator
-# gen = weibull_generator(shape, mean)
-#
-# and then call gen() every time you need a random variable
-
-
-# columns saved in the CSV file
 CSV_COLUMNS = ['lambd', 'mu', 'max_t', 'n', 'd', 'w']
 
+class Job:
+    """Class to store details of each job in the system."""
+
+    def __init__(self, job_id,remaining_time):
+        self.job_id = job_id
+        self.remaining_time = remaining_time
 
 class Queues(Simulation):
     """Simulation of a system with n servers and n queues.
@@ -39,10 +32,11 @@ class Queues(Simulation):
     def __init__(self, lambd, mu, n, d,monitoring_interval,weibull,shape):
         super().__init__()
         self.running = [None] * n  # if not None, the id of the running job (per queue)
-        self.queues = [collections.deque() for _ in range(n)]  # FIFO queues of the system
+        self.queues = [[] for _ in range(n)]  # FIFO queues of the system
         # NOTE: we don't keep the running jobs in self.queues
         self.arrivals = {}  # dictionary mapping job id to arrival time
         self.completions = {}  # dictionary mapping job id to completion time
+     
         self.lambd = lambd
         self.n = n
         self.d = d
@@ -58,26 +52,21 @@ class Queues(Simulation):
 
         self.arrival_gen = weibull_generator(shape, 1/self.arrival_rate)
         self.service_gen = weibull_generator(shape, 1/self.mu)
-        self.schedule(self.arrival_gen() if weibull else expovariate(lambd), Arrival(0))
+        
+        initial_remaining_time = self.service_gen() if weibull else expovariate(mu)
+        # initial_job = Job(0, initial_remaining_time)
+        # self.jobs[0] = initial_job
+        self.schedule(initial_remaining_time, Arrival(0,initial_remaining_time))
 
     def schedule_arrival(self, job_id):
         """Schedule the arrival of a new job."""
+        remaining_time = self.arrival_gen() if self.useWeibull else expovariate(self.arrival_rate)
+        self.schedule(remaining_time, Arrival(job_id,remaining_time))
 
-        # schedule the arrival following an exponential distribution, to compensate the number of queues the arrival
-        # time should depend also on "n"
-
-        # memoryless behavior results in exponentially distributed times between arrivals (we use `expovariate`)
-        # the rate of arrivals is proportional to the number of queues
-
-        self.schedule(self.arrival_gen() if self.useWeibull else expovariate(self.arrival_rate), Arrival(job_id))
-
-    def schedule_completion(self, job_id, queue_index):  # TODO: complete this method
+    def schedule_completion(self, job, queue_index):  
         """Schedule the completion of a job."""
-
-        # schedule the time of the completion event
-        # check `schedule_arrival` for inspiration
-
-        self.schedule(self.service_gen() if self.useWeibull else expovariate(self.mu),Completion(job_id, queue_index))
+        remaining_time = self.service_gen() if self.useWeibull else expovariate(self.mu)
+        self.schedule(remaining_time,Completion(job, queue_index))
 
 
     def queue_len(self, i):
@@ -91,51 +80,59 @@ class Queues(Simulation):
 class Arrival(Event):
     """Event representing the arrival of a new job."""
 
-    def __init__(self, job_id):
-        self.id = job_id
+    def __init__(self, job_id, reamining_time):
+        self.job = Job(job_id,reamining_time)
 
-    def process(self, sim: Queues):  # TODO: complete this method
-        sim.arrivals[self.id] = sim.t  # set the arrival time of the job
+    def process(self, sim: Queues):  
+        sim.arrivals[self.job.job_id] = sim.t  # set the arrival time of the job
         sample_queues = sample(range(sim.n), sim.d)  # sample the id of d queues at random
         queue_index = min(sample_queues, key=sim.queue_len)  # shortest queue among the sampled ones
-        # check the key argument of the min built-in function:
-        # https://docs.python.org/3/library/functions.html#min
 
-        # implement the following logic:
-
-        # if there is no running job in the queue:
-            # set the incoming one
-            # schedule its completion
-        # otherwise, put the job into the queue
-        # schedule the arrival of the next job
         if sim.running[queue_index] is None:
-            sim.running[queue_index] = self.id
-            sim.schedule_completion(self.id,queue_index)
+            sim.running[queue_index] = self.job
+            sim.schedule_completion(self.job,queue_index)
         else:
-            sim.queues[queue_index].append(self.id)
-
-        sim.schedule_arrival(self.id + 1)
-        # if you are looking for inspiration, check the `Completion` class below
-
+            # Preemption check: compare the remaining times
+            current_job = sim.running[queue_index]
+            
+            if self.job.remaining_time < current_job.remaining_time:
+                # Preempt the current job
+                current_job.remaining_time = (sim.t - sim.arrivals[current_job.job_id])
+                
+                heapq.heappush(sim.queues[queue_index], (current_job.remaining_time, current_job))
+            
+                 # Start the new job
+                sim.running[queue_index] = self.job
+                sim.schedule_completion(self.job, queue_index)
+            else:
+                # Add new job to the queue
+                heapq.heappush(sim.queues[queue_index], (self.job.remaining_time, self.job))
+              
+                
+        sim.schedule_arrival(self.job.job_id + 1)
 
 class Completion(Event):
     """Job completion."""
 
-    def __init__(self, job_id, queue_index):
-        self.job_id = job_id  # currently unused, might be useful when extending
+    def __init__(self, job, queue_index):
+        self.job = job  
         self.queue_index = queue_index
 
     def process(self, sim: Queues):
         queue_index = self.queue_index
-        assert sim.running[queue_index] == self.job_id  # the job must be the one running
-        sim.completions[self.job_id] = sim.t
-        queue = sim.queues[queue_index]
-        if queue:  # queue is not empty
-            sim.running[queue_index] = new_job_id = queue.popleft()  # assign the first job in the queue
-            sim.schedule_completion(new_job_id, queue_index)  # schedule its completion
-        else:
-            sim.running[queue_index] = None  # no job is running on the queue
+        assert sim.running[queue_index].job_id == self.job.job_id  # the job must be the one running
+        sim.completions[self.job.job_id] = sim.t
 
+        self.job.remaining_time = 0  # Mark the job as completed
+        
+        queue = sim.queues[queue_index]
+        if queue:
+            # Assign the job with the shortest remaining time to start running
+            shorttes_remainig_time, shortest_job = heapq.heappop(queue)
+            sim.running[queue_index] = shortest_job      
+            sim.schedule_completion(shortest_job, queue_index)
+        else:
+            sim.running[queue_index] = None  # No job is running on the queue
 
 class Monitoring(Event):
     """Event for periodic monitoring of queue lengths."""
@@ -165,10 +162,10 @@ def main():
     parser.add_argument('--mu', type=float, default=1, help="service rate")
     parser.add_argument('--max-t', type=float, default=1_000_000, help="maximum time to run the simulation")
     parser.add_argument('--n', type=int, default=10, help="number of servers")
-    parser.add_argument('--d', type=int, default=5, help="number of queues to sample")
+    parser.add_argument('--d', type=int, default=2, help="number of queues to sample")
     parser.add_argument('--shape', type=float, default=1, help="weibull shape")
     parser.add_argument('--csv', help="CSV file in which to store results")
-    parser.add_argument('--weibull', action=argparse.BooleanOptionalAction, default=True, help="use weibull distribution")
+    parser.add_argument('--weibull', action=argparse.BooleanOptionalAction, default=False, help="use weibull distribution")
     parser.add_argument("--seed", help="random seed")
     parser.add_argument("--verbose", action='store_true')
 
@@ -211,7 +208,7 @@ def main():
     queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
 
     # Save the results in a CSV file
-    output_csv = f"./data/{args.d}_choice-weibull-shape{args.shape}.csv" if args.weibull else f"./data/{args.d}_choice.csv"
+    output_csv = f"./data-srpt/{args.d}_choice-weibull-shape{args.shape}.csv" if args.weibull else f"./data-srpt/{args.d}_choice.csv"
     with open(output_csv, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
 
@@ -222,7 +219,7 @@ def main():
         for x, fraction in enumerate(queue_length_distribution):
             csvwriter.writerow([x, fraction])
 
-        csvwriter.writerow([])  # This adds a blank row
+        csvwriter.writerow([]) 
 
 
 

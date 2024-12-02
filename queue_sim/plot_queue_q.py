@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import argparse
 
-def plot_queue_lengths(csv_file,d,weibull,shape):
+def plot_queue_lengths(csv_file,d,weibull,shape,srpt):
     # Legge i dati dal CSV
     with open(csv_file, 'r') as file:
         lines = file.readlines()
@@ -31,22 +31,30 @@ def plot_queue_lengths(csv_file,d,weibull,shape):
 
     plt.xlabel('Queue Length')
     plt.ylabel('Fraction of queues with at least that size')
-    plt.title(f"{d} choice/s{' (weibull, shape=' + str(shape) + ')' if weibull else ''}")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f"./plots/{d}_choice{'-weibull-shape' + str(shape) + '' if weibull else ''}.png")
-
+    if not srpt:
+        plt.title(f"{d} choice/s{' (weibull, shape=' + str(shape) + ')' if weibull else ''}")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(f"./plots/{d}_choice{'-weibull-shape' + str(shape) + '' if weibull else ''}.png")
+    else: 
+        plt.title(f"SRPT: {d} choice/s{' (weibull, shape=' + str(shape) + ')' if weibull else ''}")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(f"./plots-srpt/{d}_choice{'-weibull-shape' + str(shape) + '' if weibull else ''}.png")
+        
+      
     
 
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--weibull', action=argparse.BooleanOptionalAction, help="raname as weibull plot")
+    parser.add_argument('--srpt',action=argparse.BooleanOptionalAction, help="srpt alghoritm")
     parser.add_argument('--csv', help="CSV file in which to store results")
     parser.add_argument('--d', type=int, help="number of queues to sample")
     parser.add_argument('--shape', type=float, default=1, help="weibull shape")
     args = parser.parse_args()
-    plot_queue_lengths(args.csv ,args.d,args.weibull,args.shape)
+    plot_queue_lengths(args.csv ,args.d,args.weibull,args.shape,args.srpt)
     
 
 if __name__ == '__main__':
