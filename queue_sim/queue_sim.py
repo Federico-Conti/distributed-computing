@@ -199,13 +199,20 @@ def main():
     W = ((sum(completions.values()) - sum(sim.arrivals[job_id] for job_id in completions))
          / len(completions))
     print(f"Average time spent in the system: {W}")
+    expected_time = 0
     if args.mu == 1 and args.lambd != 1:
-        print(f"Theoretical expectation for random server choice (d=1): {1 / (1 - args.lambd)}")
+        expected_time = 1 / (1 - args.lambd)
+        print(f"Theoretical expectation for random server choice (d=1): {expected_time}")
+
+    # output_avg_time = f"./data/{args.d}_choice-weibull-shape{args.shape}-avg-time.csv" if args.weibull else f"./data/{args.d}_choice-avg-time.csv"
+    # with open(output_avg_time, mode="a", newline='') as csvfile:
+    #     csvwriter = csv.writer(csvfile)
+    #     csvwriter.writerow(params + [W])
 
     if args.csv is not None:
         with open(args.csv, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(params + [W])
+            writer.writerow(params +[W]+[expected_time])
 
     # After the simulation ends
     queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
