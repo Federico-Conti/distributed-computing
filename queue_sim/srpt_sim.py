@@ -132,7 +132,7 @@ class Monitoring(Event):
 
 
 def compute_queue_length_distribution(monitored_data, n):
-    max_length = 30
+    max_length = 14
     fractions = []
     for x in range(max_length + 1):
         fraction = [
