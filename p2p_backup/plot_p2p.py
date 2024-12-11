@@ -5,7 +5,7 @@ import csv
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_data_availability(csv_file,n,k,al):
+def plot_data_availability(csv_file,n,k,al,b):
     # Liste per memorizzare i dati
     times = []
     availabilities = []
@@ -23,7 +23,7 @@ def plot_data_availability(csv_file,n,k,al):
 
     # Creazione del DataFrame per pulire e organizzare i dati
     data = pd.DataFrame({"time": times, "availability": availabilities})
-
+    
     # Calcola la media mobile per tracciare una linea di tendenza più chiara
     data["trend"] = data["availability"].rolling(window=32, center=True).mean()
 
@@ -32,7 +32,12 @@ def plot_data_availability(csv_file,n,k,al):
     plt.figure(figsize=(10, 6))
     plt.plot(data["time"], data["availability"], linestyle='-', alpha=0.5, label="Data Availability (%)")
     plt.plot(data["time"], data["trend"], color='red', linewidth=2, label="Trend (Moving Average)")
-    plt.title(f"Data Availability Over Time with N={n}, K={k}, AL={al}d")
+    
+    if b == 1:
+     plt.title(f"Data Availability Over Time with N={n}, K={k}, AL={al}d")
+    else:
+     plt.title(f"Data Availability Over Time with N={n}, K={k}, AL={al}d, B={b}")
+    
     plt.xlabel("Time (week)")
     plt.ylabel("Availability (%)")
     plt.grid(True)
@@ -43,7 +48,11 @@ def plot_data_availability(csv_file,n,k,al):
     plt.xlim(0, 2600)
     
     # Salva o mostra il grafico
-    output_plot = f"./plots/{csv_file.rsplit('/', 1)[-1].rsplit('.', 1)[0]}.png"
+    if b == 1:
+        output_plot = f"./plots/{csv_file.rsplit('/', 1)[-1].rsplit('.', 1)[0]}.png"
+    else:
+        output_plot = f"./plots-mb/{csv_file.rsplit('/', 1)[-1].rsplit('.', 1)[0]}.png"
+        
     plt.savefig(output_plot)
     
     
@@ -53,8 +62,9 @@ def main():
     parser.add_argument('--n', type=int, help="number of blocks")
     parser.add_argument('--k',type=int, help="number of blocks required to reconstruct the original data ")
     parser.add_argument('--al',type=int, help="arrival_time")
+    parser.add_argument('--b', type=int, default=1, help="b (default: 1)")
     args = parser.parse_args()
-    plot_data_availability(args.csv,args.n,args.k,args.al)
+    plot_data_availability(args.csv,args.n,args.k,args.al,args.b)
     
 
 if __name__ == '__main__':
