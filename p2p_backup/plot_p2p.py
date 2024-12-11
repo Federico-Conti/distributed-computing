@@ -5,20 +5,20 @@ import csv
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_data_availability(csv_file,n,k):
+def plot_data_availability(csv_file,n,k,al):
     # Liste per memorizzare i dati
     times = []
     availabilities = []
 
     # Conversione da secondi a anni (approssimando 1 anno = 365 giorni = 365 * 24 * 3600 secondi)
-    SECONDS_IN_YEAR = 365 * 24 * 3600
+    SECONDS_IN_WEEK = 7 * 24 * 3600
 
     # Legge i dati dal file CSV
     with open(csv_file, mode="r") as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
             if row:  # Ignora righe vuote
-                times.append(float(row[0]) / SECONDS_IN_YEAR)  # Converti in anni
+                times.append(float(row[0]) / SECONDS_IN_WEEK)  # Converti in anni
                 availabilities.append(float(row[1]))  # Percentuale di disponibilità
 
     # Creazione del DataFrame per pulire e organizzare i dati
@@ -31,13 +31,14 @@ def plot_data_availability(csv_file,n,k):
     plt.figure(figsize=(10, 6))
     plt.plot(data["time"], data["availability"], linestyle='-', alpha=0.5, label="Data Availability (%)")
     plt.plot(data["time"], data["trend"], color='red', linewidth=2, label="Trend (Moving Average)")
-    plt.title(f"Data Availability Over Time with N={n} adn K={k}")
-    plt.xlabel("Time (years)")
+    plt.title(f"Data Availability Over Time with N={n}, K={k}, AL={al}")
+    plt.xlabel("Time (week)")
     plt.ylabel("Availability (%)")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-
+    plt.xlim(0, 2000)
+    
     # Salva o mostra il grafico
     output_plot = f"./plots/{csv_file.rsplit('/', 1)[-1].rsplit('.', 1)[0]}.png"
     plt.savefig(output_plot)
@@ -48,8 +49,9 @@ def main():
     parser.add_argument('--csv', help="CSV file in which to store results")
     parser.add_argument('--n', type=int, help="number of blocks")
     parser.add_argument('--k',type=int, help="number of blocks required to reconstruct the original data ")
+    parser.add_argument('--al',type=int, help="arrival_time")
     args = parser.parse_args()
-    plot_data_availability(args.csv,args.n,args.k)
+    plot_data_availability(args.csv,args.n,args.k,args.al)
     
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ class Backup(Simulation):
         super().__init__()  # call the __init__ method of parent class
         self.nodes = nodes
         self.data = {} 
-        self.schedule(parse_timespan("1 years"), Monitoring())
+        self.schedule(parse_timespan("4w"), Monitoring())
         
         # we add to the event queue the first event of each node going online and of failing
         for node in nodes:
@@ -84,7 +84,7 @@ class Monitoring(Event):
         )
         percentage_available = (available_nodes / len(sim.nodes)) * 100
         sim.data[sim.t] = percentage_available
-        sim.schedule(parse_timespan("1 years"), Monitoring())
+        sim.schedule(parse_timespan("4w"), Monitoring())
         
         
         
@@ -400,10 +400,14 @@ def main():
     # functions to parse every parameter of peer configuration
     parsing_functions = [
         ('n', int), ('k', int),
-        ('data_size', parse_size), ('storage_size', parse_size),
-        ('upload_speed', parse_size), ('download_speed', parse_size),
-        ('average_uptime', parse_timespan), ('average_downtime', parse_timespan),
-        ('average_lifetime', parse_timespan), ('average_recover_time', parse_timespan),
+        ('data_size', parse_size),
+        ('storage_size', parse_size),
+        ('upload_speed', parse_size),
+        ('download_speed', parse_size),
+        ('average_uptime', parse_timespan),
+        ('average_downtime', parse_timespan),
+        ('average_lifetime', parse_timespan),
+        ('average_recover_time', parse_timespan),
         ('arrival_time', parse_timespan)
     ]
 
@@ -424,12 +428,12 @@ def main():
     
     
     
-    output_csv = f"./data/availability_N{cfg[0]}_K{cfg[1]}.csv"
+    output_csv = f"./data/availability_N{cfg[0]}_K{cfg[1]}_AL{int(cfg[8] / (24 * 3600))}d.csv"
     with open(output_csv, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         for time, availability in sim.data.items():
             csvwriter.writerow([time, availability])
-    subprocess.run(["python3", "plot_p2p.py", "--csv", output_csv, "--n", f"{cfg[0]}", "--k", f"{cfg[1]}"])
+    subprocess.run(["python3", "plot_p2p.py", "--csv", output_csv, "--n", f"{cfg[0]}", "--k", f"{cfg[1]}","--al",f"{int(cfg[8] / (24 * 3600))}"])
 
 if __name__ == '__main__':
     main()
