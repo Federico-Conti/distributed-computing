@@ -39,7 +39,7 @@ class Backup(Simulation):
         super().__init__()  # call the __init__ method of parent class
         self.nodes = nodes
         self.data = {} 
-        self.schedule(parse_timespan("4w"), Monitoring())
+        self.schedule(0, Monitoring())
         
         # we add to the event queue the first event of each node going online and of failing
         for node in nodes:
@@ -84,7 +84,7 @@ class Monitoring(Event):
         )
         percentage_available = (available_nodes / len(sim.nodes)) * 100
         sim.data[sim.t] = percentage_available
-        sim.schedule(parse_timespan("4w"), Monitoring())
+        sim.schedule(parse_timespan("12w"), Monitoring())
         
         
         
@@ -161,7 +161,7 @@ class Node:
                 return block_id  # This block is local but not backed up remotely
         return None # No blocks need backing up
 
-    def schedule_next_upload(self, sim: Backup):
+    def schedule_next_upload(self, sim: Backup): # chi chiama la schedule_next_upload 1^ --> trova nella lista di blocchi che gestisce per alri(remote_blocks_held) se c'è ne sono da ripristinare (quindi da inoltrare ai peer proprietari)  2^ -->  cerca un peer su cui fare il backup (salvare una copia dei suoi dati da un altra parte)
         """Schedule the next upload, if any."""
 
         assert self.online

@@ -25,19 +25,22 @@ def plot_data_availability(csv_file,n,k,al):
     data = pd.DataFrame({"time": times, "availability": availabilities})
 
     # Calcola la media mobile per tracciare una linea di tendenza più chiara
-    data["trend"] = data["availability"].rolling(window=12, center=True).mean()
+    data["trend"] = data["availability"].rolling(window=32, center=True).mean()
+
 
     # Creazione del grafico con linee continue
     plt.figure(figsize=(10, 6))
     plt.plot(data["time"], data["availability"], linestyle='-', alpha=0.5, label="Data Availability (%)")
     plt.plot(data["time"], data["trend"], color='red', linewidth=2, label="Trend (Moving Average)")
-    plt.title(f"Data Availability Over Time with N={n}, K={k}, AL={al}")
+    plt.title(f"Data Availability Over Time with N={n}, K={k}, AL={al}d")
     plt.xlabel("Time (week)")
     plt.ylabel("Availability (%)")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    plt.xlim(0, 2000)
+    plt.ylim(60, 100)
+    # plt.ylim(0, 100) # for AL=8
+    plt.xlim(0, 2600)
     
     # Salva o mostra il grafico
     output_plot = f"./plots/{csv_file.rsplit('/', 1)[-1].rsplit('.', 1)[0]}.png"
