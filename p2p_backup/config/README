@@ -1,0 +1,21 @@
+- `number = 20`: Defines the number of "peer" nodes that will be created in the simulation. In this case, 20 nodes will be created.
+- `n = 10`: The number of blocks into which the node's data is encoded. This means that each node's data will be divided into 10 blocks.
+- `k = 8`: The number of blocks required to reconstruct the original data of the node. This means that if at least 8 out of the 10 blocks are available, the node can restore the data.
+- `data_size = 1 GiB`: The amount of data to be backed up for each node. Each node will have 1 GiB of data to back up.
+- `storage_size = 10 GiB`: The storage space dedicated by each node to save the data of other nodes. Each node will have up to 10 GiB of space to store other nodes' data.
+- `upload_speed = 2 MiB`: The upload speed of the node, indicated in megabytes per second. This value determines how quickly the node can upload data to other nodes (2 MiB/s).
+- `download_speed = 10 MiB`: The download speed of the node, indicated in megabytes per second. The node can download data at a speed of 10 MiB/s.
+- `average_uptime = 8 hours`: The average time a node stays online before disconnecting, which is 8 hours. This value represents the typical availability of the node.
+- `average_downtime = 16 hours`: The average disconnection time for each node. When a node disconnects, it will stay offline for an average of 16 hours before coming back online.
+- `average_recover_time = 3 days`: The average time required for a node to recover from a failure and come back online. On average, a node that fails (losing all data) will take 3 days to be restored.
+- `average_lifetime = 1 year`: The average time before a node fails, causing the loss of all the data it holds. A node remains stable, on average, for 1 year before crashing.
+- `arrival_time = 0`: The time at which the node arrives in the system. 0 indicates that the node is already present at the start of the simulation.
+
+
+For the second assignment, here are a few ideas you could explore:
+
+Multiple blocks per-peer: rather than storing max 1 block per peer, set an additional parameter b, where a node can store at most b blocks per peer. How does system performance change?
+More diverse peers: you can do that with the configuration, but you may want to change the code so that you take random values for their parameters
+Simulate a case when peers get ``overpowered'' or get outside help when they fail
+Simulate a situation where peers pay each other to store data. What happens to peers who start as "rich"? Do peers with more resources get richer in the end? Maybe even create some kind of auction model where you allocate your space to whoever pays the most
+These are just a few examples. Let me know your though

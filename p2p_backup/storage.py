@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import configparser
@@ -15,6 +15,7 @@ from typing import Optional, List
 # It should be trivial to install (e.g., apt install python3-humanfriendly or conda/pip install humanfriendly).
 from humanfriendly import format_timespan, parse_size, parse_timespan
 from discrete_event_sim import Simulation, Event
+import subprocess
 
     
     
@@ -82,15 +83,6 @@ class Monitoring(Event):
             sum(node.local_blocks) >= node.k for node in sim.nodes
         )
         percentage_available = (available_nodes / len(sim.nodes)) * 100
-       
-        # with open("./data/pippo.csv", mode="a", newline='') as csvfile:
-        #     csvwriter = csv.writer(csvfile)
-        #     for node in sim.nodes:
-        #         csvwriter.writerow([node.local_blocks])
-        #     csvwriter.writerow([])
-        #     csvwriter.writerow([f"TEMPO {sim.t}"])
-            
-        # Aggiorna il dizionario con il valore corrente
         sim.data[sim.t] = percentage_available
         sim.schedule(parse_timespan("1 years"), Monitoring())
         
@@ -185,8 +177,8 @@ class Node:
                 sim.schedule_transfer(uploader=self, downloader=peer, block_id=block_id, restore=True)  
                 return  # we have found our upload, we stop
 
-        '''l nodo corrente cerca di aumentare la disponibilità dei suoi dati salvandoli su altri nodi.
-        Il nodo corrente (quello che chiama schedule_next_upload) sta cercando di salvare un blocco che possiede localmente su un altro nodo remoto.'''
+        '''the current node tries to increase the availability of its data by storing it on other nodes.
+        The current node (the one that calls schedule_next_upload) is trying to save a block it owns locally on another remote node.'''
         # try to back up a block on a locally held remote node
         block_id = self.find_block_to_back_up()
         if block_id is None:
@@ -218,8 +210,8 @@ class Node:
             sim.schedule_transfer(uploader=peer, downloader=self, block_id=block_id, restore=True)
             return 
 
-        '''Il nodo corrente sta cercando di aiutare un altro nodo remoto a effettuare un backup di uno dei suoi blocchi. 
-        Qui il nodo corrente agisce come destinatario di un backup richiesto da un altro nodo.'''
+        '''The current node is trying to help another remote node make a backup of one of its blocks.
+        Here the current node is acting as a recipient of a backup requested by another node.'''
         # try to back up a block for a remote node
         for peer in sim.nodes:
             if (peer is not self and peer.online and peer.current_upload is None and peer not in self.backed_up_blocks
@@ -418,7 +410,7 @@ def main():
     config = configparser.ConfigParser()
     if not config.read(args.config):
      raise FileNotFoundError(f"Configuration file '{args.config}' could not be read.")
-
+    
     nodes = []  # we build the list of nodes to pass to the Backup class
     for node_class in config.sections():
         class_config = config[node_class]
@@ -430,12 +422,14 @@ def main():
     sim.run(parse_timespan(args.max_t))
     sim.log_info(f"Simulation over")
     
-    output_csv = f"./data/availability.csv"
+    
+    
+    output_csv = f"./data/availability_N{cfg[0]}_K{cfg[1]}.csv"
     with open(output_csv, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         for time, availability in sim.data.items():
             csvwriter.writerow([time, availability])
-
+    subprocess.run(["python3", "plot_p2p.py", "--csv", output_csv, "--n", f"{cfg[0]}", "--k", f"{cfg[1]}"])
 
 if __name__ == '__main__':
     main()
