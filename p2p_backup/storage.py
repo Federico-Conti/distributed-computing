@@ -2,6 +2,7 @@
 
 import argparse
 import configparser
+import csv
 import logging
 import random
 from dataclasses import dataclass
@@ -15,7 +16,8 @@ from typing import Optional, List
 from humanfriendly import format_timespan, parse_size, parse_timespan
 from discrete_event_sim import Simulation, Event
 
-
+    
+    
 def exp_rv(mean):
     """Return an exponential random variable with the given mean."""
     return expovariate(1 / mean)
@@ -35,7 +37,9 @@ class Backup(Simulation):
     def __init__(self, nodes: List['Node']):
         super().__init__()  # call the __init__ method of parent class
         self.nodes = nodes
-
+        self.data = {} 
+        self.schedule(parse_timespan("1 years"), Monitoring())
+        
         # we add to the event queue the first event of each node going online and of failing
         for node in nodes:
             self.schedule(node.arrival_time, Online(node))
@@ -69,7 +73,29 @@ class Backup(Simulation):
         """Override method to get human-friendly logging for time."""
 
         logging.info(f'{format_timespan(self.t)}: {msg}')
+        
 
+class Monitoring(Event):
+    
+    def process(self, sim: Backup):
+        available_nodes = sum(
+            sum(node.local_blocks) >= node.k for node in sim.nodes
+        )
+        percentage_available = (available_nodes / len(sim.nodes)) * 100
+       
+        # with open("./data/pippo.csv", mode="a", newline='') as csvfile:
+        #     csvwriter = csv.writer(csvfile)
+        #     for node in sim.nodes:
+        #         csvwriter.writerow([node.local_blocks])
+        #     csvwriter.writerow([])
+        #     csvwriter.writerow([f"TEMPO {sim.t}"])
+            
+        # Aggiorna il dizionario con il valore corrente
+        sim.data[sim.t] = percentage_available
+        sim.schedule(parse_timespan("1 years"), Monitoring())
+        
+        
+        
 
 @dataclass(eq=False)  # auto initialization from parameters below (won't consider two nodes with same state as equal)
 class Node:
@@ -403,6 +429,12 @@ def main():
     sim = Backup(nodes)
     sim.run(parse_timespan(args.max_t))
     sim.log_info(f"Simulation over")
+    
+    output_csv = f"./data/availability.csv"
+    with open(output_csv, mode="a", newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        for time, availability in sim.data.items():
+            csvwriter.writerow([time, availability])
 
 
 if __name__ == '__main__':
