@@ -386,7 +386,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("config", help="configuration file")
     parser.add_argument("--max-t", default="100 years")
-    parser.add_argument("--seed", help="random seed")
+    parser.add_argument("--seed", default=13, help="random seed")
     parser.add_argument("--verbose", action='store_true')
     args = parser.parse_args()
 
@@ -398,10 +398,14 @@ def main():
     # functions to parse every parameter of peer configuration
     parsing_functions = [
         ('n', int), ('k', int),
-        ('data_size', parse_size),
-        ('storage_size', parse_size),
-        ('upload_speed', parse_size),
-        ('download_speed', parse_size),
+        ('data_size_min', parse_size),
+        ('data_size_max', parse_size),
+        ('storage_size_min', parse_size),
+        ('storage_size_max', parse_size),
+        ('upload_speed_min', parse_size),
+        ('upload_speed_max', parse_size),
+        ('download_speed_min', parse_size),
+        ('download_speed_max', parse_size),
         ('average_uptime', parse_timespan),
         ('average_downtime', parse_timespan),
         ('average_lifetime', parse_timespan),
@@ -419,19 +423,39 @@ def main():
         # list comprehension: https://docs.python.org/3/tutorial/datastructures.html#list-comprehensions
         cfg = [parse(class_config[name]) for name, parse in parsing_functions]
         # the `callable(p1, p2, *args)` idiom is equivalent to `callable(p1, p2, args[0], args[1], ...)
-        nodes.extend(Node(f"{node_class}-{i}", *cfg) for i in range(class_config.getint('number')))
+       
+    for i in range(class_config.getint('number')):
+        data_size = random.randint(cfg[2], cfg[3])
+        storage_size = random.randint(cfg[4], cfg[5])
+        upload_speed = random.uniform(cfg[6], cfg[7])
+        download_speed = random.uniform(cfg[8], cfg[9])
+        nodes.append(Node(
+        name=f"{node_class}-{i}",
+        n=cfg[0],
+        k=cfg[1],
+        data_size=data_size,
+        storage_size=storage_size,
+        upload_speed=upload_speed,
+        download_speed=download_speed,
+        average_uptime=cfg[10],
+        average_downtime=cfg[11],
+        average_lifetime=cfg[12],
+        average_recover_time=cfg[13],
+        arrival_time=cfg[14]
+        ))
+        
     sim = Backup(nodes)
     sim.run(parse_timespan(args.max_t))
     sim.log_info(f"Simulation over")
     
     
     
-    output_csv = f"./basic-data/availability_N{cfg[0]}_K{cfg[1]}_AL{int(cfg[8] / (24 * 3600))}d.csv"
+    output_csv = f"./diverse-data/availability_N{cfg[0]}_K{cfg[1]}_AL{int(cfg[12] / (24 * 3600))}d.csv"
     with open(output_csv, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         for time, availability in sim.data.items():
             csvwriter.writerow([time, availability])
-    subprocess.run(["python3", "plot_p2p.py", "--csv", output_csv, "--n", f"{cfg[0]}", "--k", f"{cfg[1]}","--al",f"{int(cfg[8] / (24 * 3600))}"])
+    subprocess.run(["python3", "plot_p2p.py", "--csv", output_csv, "--n", f"{cfg[0]}", "--k", f"{cfg[1]}","--al",f"{int(cfg[12] / (24 * 3600))}","--diverse"])
 
 if __name__ == '__main__':
     main()
