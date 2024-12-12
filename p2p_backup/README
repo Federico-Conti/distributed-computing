@@ -1,0 +1,85 @@
+# P2P Simulation
+
+This document describes two types of simulations for peer-to-peer interactions and performance measurement.
+
+## Basic Simulation
+
+- **Run**: Execute the simulation using `p2p_basic.sh`
+- **Description**: Uses identical configuration files for each peer.
+- **Scripts**: `discret_event_sim.py`, `storage.py`, `plot_p2p.py`.
+- **Configuration**: Located in `./basic-config`
+- **Output**: Data and plots are saved in the `basic-data` and `basic-plots` folders.
+
+## Diverse Blocks Simulation
+
+- **Run**: Execute the simulation using `p2p_diverse.sh`
+- **Description**: Uses randomly sampled metrics configuration for each peer.
+- **Scripts**: `discret_event_sim.py`, `diverse_blocks_storage.py`, `plot_p2p.py`.
+- **Configuration**: Located in `./diverse-config-db`
+- **Output**: Data and plots are saved in the `diversedata-db` and `diverseplots-db` folders.
+
+## Behavior of main method in storage.py
+
+### schedule_next_upload
+
+1. **Logic Explanation**
+
+// This function performs the following steps:
+// 1. Checks the list of blocks it manages for others (remote_blocks_held) to see if there are any to be restored (i.e., forwarded to the owning peers).
+// 2. Searches for a peer on which to perform the backup (save a copy of its data elsewhere).
+
+    1.1 **Initial Condition:**
+    - If the node is not online, an assertion is generated.
+    - If an upload is already in progress (current_upload), the function terminates.
+
+    1.2 **Search for Blocks to Restore:**
+    - Iterates through the blocks in self.remote_blocks_held mapping.
+    - Checks if a peer does not have the block locally (not peer.local_blocks[block_id]), is online (peer.online), and is not downloading other data (peer.current_download is None).
+    - If a necessary block for the peer is found, schedules a transfer to restore the block (restore=True).
+
+    1.3 **Search for Blocks to Save:**
+    - Uses self.find_block_to_back_up() to identify a block that needs to be saved on another peer.
+    - If there are no blocks to save, the function terminates.
+
+    1.4 **Schedule Block Backup:**
+    - For each node in the simulation (sim.nodes), checks:
+      - The node is not the same (peer is not self).
+      - It is online (peer.online).
+      - It is not already among the remote owners (peer not in remote_owners).
+      - It is not currently downloading (peer.current_download is None).
+      - It has enough space to host the block (peer.free_space >= self.block_size).
+    - If an eligible node is found, schedules a transfer to back up the block (restore=False).
+
+    1.5 **Termination:**
+    - The function terminates when it finds and schedules a transfer operation, or if no blocks are found to transfer.
+
+### schedule_next_download
+
+2. **Logic Explanation**
+
+    2.1 **Node State Verification:**
+    - The function starts by checking that the node is online.
+    - If the node is already downloading a block (self.current_download is not None), it does nothing.
+
+    2.2 **Restore Missing Blocks:**
+    - Iterates through the node's local blocks using enumerate and zip.
+
+      **Conditions:**
+      - The block is not present locally (not held_locally).
+      - There is a remote node that holds the block (peer is not None).
+      - The remote node is online (peer.online) and is not currently engaged in an upload (peer.current_upload is None).
+    - If a missing block is found, schedules a transfer to restore it (restore=True) and terminates.
+
+    2.3 **Download Blocks for Other Nodes:**
+    - Iterates through all nodes in the simulation.
+
+      **Conditions:**
+      - The remote node is not the current node (peer is not self).
+      - The remote node is online (peer.online) and is not already uploading another block (peer.current_upload is None).
+      - The remote node is not already one of the nodes holding blocks for the current node (peer not in self.backed_up_blocks).
+      - The current node has enough free space to host the block (self.free_space >= peer.block_size).
+    - Searches for a block that the remote node wants to save using peer.find_block_to_back_up().
+    - If a block is found, schedules a transfer to save it (restore=False) and terminates.
+
+    2.4 **Termination:**
+    - If there are no missing blocks to restore or blocks to download for other nodes, the function terminates without doing anything.
