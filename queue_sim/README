@@ -1,0 +1,18 @@
+# Discrete Event Simulation
+
+This document describes two types of simulations for discrete event simulation interactions and performance measurement.
+
+## Queue Simulation
+
+- **Run expovariate version**: Execute the simulation using `queue_experiments1.sh` and `queue_experiments2.sh`
+- **Run weibull version**: Execute the simulation using `queue_experiments3.sh`
+- **Description**: Uses either expovariate or weibull distribution to assign schedule delay.
+- **Scripts**: `discrete_event_sim.py`, `queue_sim.py`, `plot_queue_q.py`
+- **Output**: Data and plots are saved in the `data` and `plots` folders.
+
+## SRPT Simulation (Extension)
+
+- **Run**: Execute the simulation using `queue_experiments4.sh`
+- **Description**: Uses Shortest Remaining Processing Time to assign a shorter job to the running server.
+- **Scripts**: `discrete_event_sim_srpt.py`, `srpt_sim.py`, `plot_queue_q.py`
+- **Output**: Data and plots are saved in the `data-srpt` and `plots-srpt` folders.

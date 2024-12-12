@@ -49,7 +49,7 @@ def plot_queue_lengths(csv_file,d,weibull,shape,srpt):
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--weibull', action=argparse.BooleanOptionalAction, help="raname as weibull plot")
-    parser.add_argument('--srpt',action=argparse.BooleanOptionalAction, help="srpt alghoritm")
+    parser.add_argument('--srpt',action=argparse.BooleanOptionalAction, help="use srpt alghoritm")
     parser.add_argument('--csv', help="CSV file in which to store results")
     parser.add_argument('--d', type=int, help="number of queues to sample")
     parser.add_argument('--shape', type=float, default=1, help="weibull shape")
