@@ -15,8 +15,11 @@ This document describes two types of simulations for peer-to-peer interactions a
 - **Run**: Execute the simulation using `p2p_diverse.sh`
 - **Description**: Uses randomly sampled metrics configuration for each peer.
 - **Scripts**: `discret_event_sim.py`, `diverse_blocks_storage.py`, `plot_p2p.py`.
-- **Configuration**: Located in `./diverse-config-db`
-- **Output**: Data and plots are saved in the `diversedata-db` and `diverseplots-db` folders.
+- **Configuration**: Located in `./diverse-config`
+- **Output**: Data and plots are saved in the `diverse-data` and `diverse-plots` folders.
+
+> **Note**: If you want to extract new plots, you need to delete the existing CSV files; otherwise, the new data will be appended to the existing files.
+
 
 ## Behavior of main method in storage.py
 
