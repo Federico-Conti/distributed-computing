@@ -1,6 +1,6 @@
-# Discrete Event Simulation
+# Queue Simulation (DES)
 
-This document describes two types of simulations for discrete event simulation interactions and performance measurement.
+This document outlines two types of simulations for analyzing queueing and scheduling interactions and measuring performance.
 
 ## Queue Simulation
 

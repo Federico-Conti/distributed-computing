@@ -1,8 +1,8 @@
-# P2P Simulation
+# P2P Simulation (DES)
 
 This document describes two types of simulations for peer-to-peer interactions and performance measurement.
 
-## Basic Simulation
+## Equal Peer Simulation
 
 - **Run**: Execute the simulation using `p2p_basic.sh`
 - **Description**: Uses identical configuration files for each peer.
@@ -10,7 +10,7 @@ This document describes two types of simulations for peer-to-peer interactions a
 - **Configuration**: Located in `./basic-config`
 - **Output**: Data and plots are saved in the `basic-data` and `basic-plots` folders.
 
-## Diverse Blocks Simulation
+## Diverse Peer Simulation
 
 - **Run**: Execute the simulation using `p2p_diverse.sh`
 - **Description**: Uses randomly sampled metrics configuration for each peer.
