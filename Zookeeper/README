@@ -1,0 +1,20 @@
+To reproduce on Ubuntu (tested on 22.04):
+
+1. Install Zookeeper and Kazoo:
+    ```bash
+    sudo apt install zookeeper python3-kazoo
+    ```
+
+2. Start the Zookeeper service:
+    ```bash
+    sudo /usr/share/zookeeper/bin/zkServer.sh start
+    ```
+
+3. Run ZooInspector:
+    ```bash
+    zooinspector
+    ```
+
+4. Run this script in several processes at the same time.
+
+To stop the Zookeeper service, run:
