@@ -1,0 +1,25 @@
+## Wordcount.py 
+This Python code implements a program to count words in a text file using the simplemr framework for MapReduce. The program uses two classes to handle the mapping and reduction of data: `WordCount` and `WordCountCombine`, with the latter also including a combining phase to optimize the process.
+
+### Executions
+**Without Combiner**
+- Only the `WordCount` class is used.
+- The file `mobydick.txt` is analyzed, and the list of the 10 most frequent words is printed.
+
+**With Combiner** 
+- The `WordCountCombine` class is used.
+- The process is faster and uses fewer resources, thanks to the combining phase.
+
+
+## mean.py 
+This Python code implements a program to  calculate the average of the 'Overall' values for each club. The program uses two classes to handle the mapping and reduction of data: `FifaMean` and `FifaMeanCombine`, with the latter also including a combining phase to optimize the process.
+
+### Executions
+**Without Combiner**
+- Only the `FifaMean` class is used.
+- The file `fifa21.csv` is analyzed, and the list of the 10 most frequent words is printed.
+
+**With Combiner** 
+- The `FifaMeanCombine` class is used.
+- The process is faster and uses fewer resources, thanks to the combining phase.
+
