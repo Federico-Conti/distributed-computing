@@ -204,10 +204,10 @@ def main():
         expected_time = 1 / (1 - args.lambd)
         print(f"Theoretical expectation for random server choice (d=1): {expected_time}")
 
-    # output_avg_time = f"./data/{args.d}_choice-weibull-shape{args.shape}-avg-time.csv" if args.weibull else f"./data/{args.d}_choice-avg-time.csv"
-    # with open(output_avg_time, mode="a", newline='') as csvfile:
-    #     csvwriter = csv.writer(csvfile)
-    #     csvwriter.writerow(params + [W])
+    output_avg_time = f"./data/{args.d}_choice-weibull-shape{args.shape}-avg-time.csv" if args.weibull else f"./data/{args.d}_choice-avg-time.csv"
+    with open(output_avg_time, mode="a", newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(params + [W])
 
     if args.csv is not None:
         with open(args.csv, 'a', newline='') as f:

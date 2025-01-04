@@ -185,6 +185,12 @@ def main():
     if args.mu == 1 and args.lambd != 1:
         print(f"Theoretical expectation for random server choice (d=1): {1 / (1 - args.lambd)}")
 
+
+    output_avg_time = f"./data-srpt/{args.d}_choice-weibull-shape{args.shape}-avg-time.csv" if args.weibull else f"./data-srpt/{args.d}_choice-avg-time.csv"
+    with open(output_avg_time, mode="a", newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(params + [W])
+
     if args.csv is not None:
         with open(args.csv, 'a', newline='') as f:
             writer = csv.writer(f)
@@ -195,17 +201,17 @@ def main():
 
     # Save the results in a CSV file
     output_csv = f"./data-srpt/{args.d}_choice-weibull-shape{args.shape}.csv" if args.weibull else f"./data-srpt/{args.d}_choice.csv"
-    with open(output_csv, mode="a", newline='') as csvfile:
-        csvwriter = csv.writer(csvfile)
+    # with open(output_csv, mode="a", newline='') as csvfile:
+    #     csvwriter = csv.writer(csvfile)
 
-        # Write the header
-        csvwriter.writerow([args.lambd])
+    #     # Write the header
+    #     csvwriter.writerow([args.lambd])
 
-        # Write the data
-        for x, fraction in enumerate(queue_length_distribution):
-            csvwriter.writerow([x, fraction])
+    #     # Write the data
+    #     for x, fraction in enumerate(queue_length_distribution):
+    #         csvwriter.writerow([x, fraction])
 
-        csvwriter.writerow([]) 
+    #     csvwriter.writerow([]) 
 
 
 
