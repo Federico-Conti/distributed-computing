@@ -199,6 +199,12 @@ def main():
     W = ((sum(completions.values()) - sum(sim.arrivals[job_id] for job_id in completions))
          / len(completions))
     print(f"Average time spent in the system: {W}")
+
+    variance = sum((completions[job_id] - sim.arrivals[job_id] - W) ** 2 for job_id in completions) / len(completions)
+    coefficient_of_variation = np.sqrt(variance) / W
+    print(f"Variance of the time spent in the system: {variance}")
+    print(f"Coefficient of variation: {coefficient_of_variation}")
+
     expected_time = 0
     if args.mu == 1 and args.lambd != 1:
         expected_time = 1 / (1 - args.lambd)
