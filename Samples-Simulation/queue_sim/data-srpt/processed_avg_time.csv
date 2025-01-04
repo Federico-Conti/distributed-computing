@@ -1,4 +1,4 @@
-Lambda,Mu,N,D,Average Time Spent,Theoretical Time
+Lambda,Mu,N,D,Average Time Spent(SRPT),Theoretical Time
 0.5,1,10,1,1.71,2.0
 0.9,1,10,1,4.19,10.0
 0.95,1,10,1,6.28,20.0

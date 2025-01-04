@@ -5,12 +5,12 @@ from tabulate import tabulate
 
 file_path = 'data-srpt/avg_time.csv'
 
-columns = ['Lambda', 'Mu', 'Max T', 'N', 'D', 'Average Time Spent', 'Theoretical Time']
+columns = ['Lambda', 'Mu', 'Max T', 'N', 'D', 'Average Time Spent(SRPT)', 'Theoretical Time']
 
 df = pd.read_csv(file_path, header=None, names=columns)
 df = df.drop(columns=['Max T'])
 
-df['Average Time Spent'] = df['Average Time Spent'].round(2)
+df['Average Time Spent(SRPT)'] = df['Average Time Spent(SRPT)'].round(2)
 df['Theoretical Time'] = df['Theoretical Time'].round(2)
 
 output_path = 'data-srpt/processed_avg_time.csv'
