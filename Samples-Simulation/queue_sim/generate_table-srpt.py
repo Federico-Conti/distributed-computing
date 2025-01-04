@@ -3,17 +3,17 @@
 import pandas as pd
 from tabulate import tabulate
 
-file_path = 'data/avg-time.csv'
+file_path = 'data-srpt/avg-time.csv'
 
-columns = ['Lambda', 'Mu', 'Max T', 'N', 'D', 'Average Time Spent', 'Theoretical Time']
+columns = ['Lambda', 'Mu', 'Max T', 'N', 'D', 'Average Time Spent(SRPT)', 'Theoretical Time']
 
 df = pd.read_csv(file_path, header=None, names=columns)
 df = df.drop(columns=['Max T'])
 
-df['Average Time Spent'] = df['Average Time Spent'].round(2)
+df['Average Time Spent(SRPT)'] = df['Average Time Spent(SRPT)'].round(2)
 df['Theoretical Time'] = df['Theoretical Time'].round(2)
 
-output_path = 'data/processed_avg-time.csv'
+output_path = 'data-srpt/processed_avg-time.csv'
 df.to_csv(output_path, index=False)
 
 processed_df = pd.read_csv(output_path)

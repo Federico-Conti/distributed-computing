@@ -200,42 +200,37 @@ def main():
          / len(completions))
     print(f"Average time spent in the system: {W}")
 
-    variance = sum((completions[job_id] - sim.arrivals[job_id] - W) ** 2 for job_id in completions) / len(completions)
-    coefficient_of_variation = np.sqrt(variance) / W
-    print(f"Variance of the time spent in the system: {variance}")
-    print(f"Coefficient of variation: {coefficient_of_variation}")
-
     expected_time = 0
     if args.mu == 1 and args.lambd != 1:
         expected_time = 1 / (1 - args.lambd)
         print(f"Theoretical expectation for random server choice (d=1): {expected_time}")
 
-    output_avg_time = f"./data/{args.d}_choice-weibull-shape{args.shape}-avg-time.csv" if args.weibull else f"./data/{args.d}_choice-avg-time.csv"
+    output_avg_time = f"./data/avg-time.csv"
     with open(output_avg_time, mode="a", newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(params + [W])
+        csvwriter.writerow(params + [W] + [expected_time])
 
-    if args.csv is not None:
-        with open(args.csv, 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(params +[W]+[expected_time])
+    # if args.csv is not None:
+    #     with open(args.csv, 'a', newline='') as f:
+    #         writer = csv.writer(f)
+    #         writer.writerow(params +[W])
 
-    # After the simulation ends
-    queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
+    # # After the simulation ends
+    # queue_length_distribution = compute_queue_length_distribution(sim.monitored_data, args.n)
 
-    # Save the results in a CSV file
-    output_csv = f"./data/{args.d}_choice-weibull-shape{args.shape}.csv" if args.weibull else f"./data/{args.d}_choice.csv"
-    with open(output_csv, mode="a", newline='') as csvfile:
-        csvwriter = csv.writer(csvfile)
+    # # Save the results in a CSV file
+    # output_csv = f"./data/{args.d}_choice-weibull-shape{args.shape}.csv" if args.weibull else f"./data/{args.d}_choice.csv"
+    # with open(output_csv, mode="a", newline='') as csvfile:
+    #     csvwriter = csv.writer(csvfile)
 
-        # Write the header
-        csvwriter.writerow([args.lambd])
+    #     # Write the header
+    #     csvwriter.writerow([args.lambd])
 
-        # Write the data
-        for x, fraction in enumerate(queue_length_distribution):
-            csvwriter.writerow([x, fraction])
+    #     # Write the data
+    #     for x, fraction in enumerate(queue_length_distribution):
+    #         csvwriter.writerow([x, fraction])
 
-        csvwriter.writerow([])  # This adds a blank row
+    #     csvwriter.writerow([])  # This adds a blank row
 
 
 

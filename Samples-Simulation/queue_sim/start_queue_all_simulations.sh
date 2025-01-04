@@ -20,7 +20,7 @@ for S in 0.5 1.0 2.0; do
 done
 
 
-for S in 1.0 2.0; do
+for S in 0.5 1.0 2.0; do
     for D in 1 2 5 10; do
         for LAMBD in 0.5 0.9 0.95 0.99; do
             echo $LAMBD 
