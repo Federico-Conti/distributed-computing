@@ -4,7 +4,7 @@ This document describes two types of simulations for peer-to-peer interactions a
 
 ## Equal Peer Simulation
 
-- **Run**: Execute the simulation using `p2p_basic.sh`
+- **Run**: Execute the simulation using `start_p2p_basic.sh`
 - **Description**: Uses identical configuration files for each peer.
 - **Scripts**: `discret_event_sim.py`, `storage.py`, `plot_p2p.py`.
 - **Configuration**: Located in `./basic-config`
@@ -12,7 +12,7 @@ This document describes two types of simulations for peer-to-peer interactions a
 
 ## Diverse Peer Simulation
 
-- **Run**: Execute the simulation using `p2p_diverse.sh`
+- **Run**: Execute the simulation using `start_p2p_diverse.sh`
 - **Description**: Uses randomly sampled metrics configuration for each peer.
 - **Scripts**: `discret_event_sim.py`, `diverse_blocks_storage.py`, `plot_p2p.py`.
 - **Configuration**: Located in `./diverse-config`

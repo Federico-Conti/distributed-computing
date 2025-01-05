@@ -1,0 +1,10 @@
+# Distributed Computing Assignments
+
+## Requirements
+
+* Create a virtual Python environment using the `source /stat.sh` command.
+
+* Navigate to the `queue_sim` folder to play with the **Queue Simulation (DES)**.
+
+* Navigate to the `p2p_backup` folder to play with the **P2P Simulation (DES)**.
+
