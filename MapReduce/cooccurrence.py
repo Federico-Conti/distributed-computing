@@ -19,7 +19,7 @@ class PairCoOccurrence(simplemr.MapReduceCombine):
         line = line.lower()
         words = [w for w in WORD_RE.findall(line) if w not in STOPWORDS]
         for i, w1 in enumerate(words):
-            for w2 in words[i+1:i + self.window]:
+            for w2 in words[i+1:i + self.window]: #  extracts a subset of the words list starting at index i+1 and ending at index i + self.window - 1
                 pair = (w1, w2) if w1 < w2 else (w2, w1)
                 yield pair, 1
         
@@ -38,9 +38,10 @@ class StripesCoOccurrence(simplemr.MapReduceCombine):
         line = line.lower()
         words = [w for w in WORD_RE.findall(line) if w not in STOPWORDS]
         # res = collections.defaultdict(collections.Counter)
-        res = {w: collections.Counter() for w in words}
+        res = {w: collections.Counter() for w in words} #{"quick": Counter(), "brown": Counter(), "fox": Counter() ...}
         for i, w1 in enumerate(words):
-            for w2 in words[i+1:i+self.window]:
+            lim = words[i+1:i+self.window] # [)
+            for w2 in lim:
                 if w1 < w2:
                     res[w1][w2] += 1
                 else:

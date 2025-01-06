@@ -1,5 +1,5 @@
 ## Wordcount.py 
-This Python code implements a program to count words in a text file using the simplemr framework for MapReduce. The program uses two classes to handle the mapping and reduction of data: `WordCount` and `WordCountCombine`, with the latter also including a combining phase to optimize the process.
+This script implements a program to count words in a text file using the simplemr framework for MapReduce. The program uses two classes to handle the mapping and reduction of data: `WordCount` and `WordCountCombine`, with the latter also including a combining phase to optimize the process.
 
 ### Executions
 **Without Combiner**
@@ -12,7 +12,7 @@ This Python code implements a program to count words in a text file using the si
 
 
 ## mean.py 
-This Python code implements a program to  calculate the average of the 'Overall' values for each club. The program uses two classes to handle the mapping and reduction of data: `FifaMean` and `FifaMeanCombine`, with the latter also including a combining phase to optimize the process.
+This script code implements a program to  calculate the average of the 'Overall' values for each club. The program uses two classes to handle the mapping and reduction of data: `FifaMean` and `FifaMeanCombine`, with the latter also including a combining phase to optimize the process.
 
 ### Executions
 **Without Combiner**
@@ -23,3 +23,15 @@ This Python code implements a program to  calculate the average of the 'Overall'
 - The `FifaMeanCombine` class is used.
 - The process is faster and uses fewer resources, thanks to the combining phase.
 
+
+## cooccurrence.py 
+This script implements two approaches to calculate co-occurrences of words in a text with a given context range (word window). It is useful for text analysis, such as finding word associations in a corpus. The two approaches are Pair-Based and Stripe-Based.
+
+### Executions
+**Pair-Based**
+- Only the `PairCoOccurrence` class is used.
+- It calculates co-occurrence by directly generating word pairs.
+
+**Stripe-Based** 
+- Only the `StripesCoOccurrence` class is used.
+- It uses a band (or strip) approach to associate each word with a counter of its co-occurrences.

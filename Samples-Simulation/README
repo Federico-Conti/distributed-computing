@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* Create a virtual Python environment using the `source /stat.sh` command.
+* Create a virtual Python environment using the `source ./stat.sh` command.
 
 * Navigate to the `queue_sim` folder to play with the **Queue Simulation (DES)**.
 
